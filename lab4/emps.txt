@@ -1,0 +1,4 @@
+fname=bob
+lname=ross
+rate=15.05
+hours=40
