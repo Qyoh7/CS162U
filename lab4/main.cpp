@@ -1,13 +1,15 @@
 #include <iostream>
-#include <vector>
+#include <utility>
 #include <fstream>
+#include <vector>
 #include <string>
-#include <memory>
 using std::cout;
 using std::ios;
 using std::fstream;
-using std::string;
 using std::vector;
+using std::string;
+using std::pair;
+
 
 struct employee
 {
@@ -17,16 +19,20 @@ struct employee
     unsigned short int hours;
 };
 
-vector<employee> readFile(string name)
+pair<employee*, size_t> readFile(string name)
 {
     employee tmp{};
-    vector<employee> employees;
     fstream f(name, ios::in);
     string line;
+    int SIZE = 0;
+    int field = 0;
     int i = 0;
 
     if (f)
     {
+        std::getline(f, line);
+        SIZE = std::stoi(line);
+        employee* emps = new employee[SIZE];
         while (std::getline(f, line))
         {
             int pos = line.find("=");
@@ -37,17 +43,19 @@ vector<employee> readFile(string name)
             else if (var == "lname") tmp.lName = val;
             else if (var == "rate") tmp.rate = stod(val);
             else if (var == "hours") tmp.hours = stoi(val);
-            if (i == 3)
+            if (field == 3)
             {
-                employees.push_back(tmp);
-                i = 0;
+                emps[i] = tmp;
+                field = 0;
+                i++;
             }
-            else i++;
+            else field++;
         }
         f.close();
+        return pair<employee*, size_t>(emps, SIZE);
     }
     else cout << "Error opening file " << name << "\n";
-    return employees;
+    return pair<employee*, size_t>(nullptr, 0);
 }
 
 void writeFileBinary(string name, vector<employee> emps)
@@ -75,37 +83,44 @@ void writeFileBinary(string name, vector<employee> emps)
     else cout << "Error opening file " << name << "\n";
 }
 
-vector<employee> readFileBinary(string name)
+pair<employee*, size_t> readFileBinary(string name)
 {
     fstream fin;
     int SIZE = 0;
-    employee tmp{};
+    size_t tmp{};
     fin.open(name, ios::in | ios::binary);
 
     if (fin)
     {
         fin.read(reinterpret_cast<char*>(&SIZE), sizeof(int));
-        for (employee e : emps)
+        employee* emps = new employee[SIZE];
+        for (int i = 0; i < SIZE; i++)
         {
-            int len = e.fName.size();
-            fout.write(reinterpret_cast<char*>(&len), sizeof(len));
-            fout.write(e.fName.c_str(), len);
+            int len = emps[i].fName.size();
+            fin.write(reinterpret_cast<char*>(&len), sizeof(len));
+            fin.write(emps[i].fName.c_str(), len);
 
-            len = e.lName.size();
-            fout.write(reinterpret_cast<char*>(&len), sizeof(len));
-            fout.write(e.lName.c_str(), len);
+            len = emps[i].lName.size();
+            fin.write(reinterpret_cast<char*>(&len), sizeof(len));
+            fin.write(emps[i].lName.c_str(), len);
 
-            fout.write(reinterpret_cast<char*>(&e.rate), sizeof(double));
-            fout.write(reinterpret_cast<char*>(&e.hours), sizeof(unsigned short int));
+            fin.write(reinterpret_cast<char*>(&emps[i].rate), sizeof(double));
+            fin.write(reinterpret_cast<char*>(&emps[i].hours), sizeof(unsigned short int));
         }
+        return pair<employee*, size_t>(emps, SIZE);
     }
     else cout << "Error opening file " << name << "\n";
 }
 
 int main()
 {
-    vector<employee> emps = readFile("emps.txt");
-    writeFileBinary("emps.dat", emps);
+    pair<employee*, size_t> emps = readFile("emps.txt");
+    for (int i = 0; i < emps.second; i++)
+    {
+        cout << emps.first[i].fName << " " << emps.first[i].lName << "\n";
+        cout << "rate: " << emps.first[i].rate << "\n";
+        cout << "hours: " << emps.first[i].hours << "\n";
+    }
 
     return 0;
 }
