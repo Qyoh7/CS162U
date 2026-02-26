@@ -61,36 +61,38 @@ employeeArr readFile(string name)
     return employeeArr{nullptr, 0};
 }
 
-
 employeeArr readFileBinary(string name)
 {
     fstream fin;
     size_t SIZE = 0;
     employee tmp{};
+    char* line;
     fin.open(name, ios::in | ios::binary);
 
     if (fin)
     {
         fin.read(reinterpret_cast<char*>(&SIZE), sizeof(size_t));
         employee* emps = new employee[SIZE];
-        for (int i = 0; i < SIZE; i++)
+        while (fin.read(line, sizeof(char*)))
         {
-            int len = emps[i].fName.size();
-            fin.write(reinterpret_cast<char*>(&len), sizeof(len));
-            fin.write(emps[i].fName.c_str(), len);
+            int pos = line.find("=");
+            string var = line.substr(0, pos);
+            string val = line.substr(pos + 1);
 
-            len = emps[i].lName.size();
-            fin.write(reinterpret_cast<char*>(&len), sizeof(len));
-            fin.write(emps[i].lName.c_str(), len);
-
-            fin.write(reinterpret_cast<char*>(&emps[i].rate), sizeof(double));
-            fin.write(reinterpret_cast<char*>(&emps[i].hours), sizeof(unsigned short int));
+            if (var == "fname") tmp.fName = val;
+            else if (var == "lname") tmp.lName = val;
+            else if (var == "rate") tmp.rate = stod(val);
+            else if (var == "hours") tmp.hours = stoi(val);
+            if (field == 3)
+            {
+                emps[i] = tmp;
+                field = 0;
+                i++;
+            }
+            else field++;
         }
+        f.close();
         return employeeArr{emps, SIZE};
-    }
-    else cout << "Error opening file " << name << "\n";
-
-    return employeeArr{};
 }
 
 void writeFileBinary(string name, employeeArr emps)
@@ -133,16 +135,16 @@ int main()
     }
     cout << "writing file\n";
     writeFileBinary("emps.dat", emps);
+
     cout << "reading file from binary\n";
     employeeArr empsFromBin = readFileBinary("emps.dat");
+
     cout << "results: \n";
-    cout << "Size: " << emps.SIZE << "\n";
-    cout << "Name: " << sizeof(emps.emps[0].fName) << "\n";
-    for (int i = 0; i < emps.SIZE; i++)
+    for (size_t i = 0; i < empsFromBin.SIZE; i++)
     {
-        cout << emps.emps[i].fName << " " << emps.emps[i].lName << "\n";
-        cout << "rate: " << emps.emps[i].rate << "\n";
-        cout << "hours: " << emps.emps[i].hours << "\n";
+        cout << empsFromBin.emps[i].fName << " " << empsFromBin.emps[i].lName << "\n";
+        cout << "rate: " << empsFromBin.emps[i].rate << "\n";
+        cout << "hours: " << empsFromBin.emps[i].hours << "\n";
     }
     
 
