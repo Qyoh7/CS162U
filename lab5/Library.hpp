@@ -55,15 +55,20 @@ class Library
         }
         ~Library()
         {
-            delete head;
-            delete tail;
+            Song* tmp = head;
+            while (tmp != NULL)
+            {
+                delete tmp;
+                tmp = tmp.next;
+            }
+            head = NULL;
         }
 
-        void insertAtBeginning(string title, string artist, string album, int durationSeconds)
+        void add(string title, string artist, string album, int durationSeconds)
         {
             Song* newSong =  new Song(title, artist, album, durationSeconds);
-            newSong->next = head;
-            head = newSong;
+            tail = newSong;
+            tail.next = tail;
         }
 
         Song* searchBySong(string query)
@@ -124,11 +129,24 @@ class Library
             fout.close();
         }
 
-        void load(string fileName)
+        batchAdd(string fileName)
         {
+            ifstream fin;
+            fin.open(fileName, std::ios::in);
+            char* line;
+
+            if (!fin)
+            {
+                cout << "Failed to open file\n";
+                return;
+            }
+
+            while (getline(fin, line))
+            {
+                
+            }
 
         }
-
 
     private:
         Song* head = NULL;
