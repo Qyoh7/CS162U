@@ -1,0 +1,14 @@
+title=test title
+album=test album
+artist=test artist
+durationSeconds=0
+
+title=test title 2
+album=test album 2
+artist=test artist 2
+durationSeconds=2
+
+title=test title 3
+album=test album 3
+artist=test artist 3
+durationSeconds=3

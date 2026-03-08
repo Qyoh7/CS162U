@@ -10,6 +10,7 @@ class Song
             this->artist = artist;
             this->album = album;
             this->durationSeconds = durationSeconds;
+            next = nullptr;
         }
         Song()
         {
@@ -17,6 +18,7 @@ class Song
             artist = "";
             album = "";
             durationSeconds = 0;
+            next = nullptr;
         }
         Song* next;
         string title;

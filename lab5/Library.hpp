@@ -10,206 +10,309 @@ using std::string;
 
 class Library
 {
+
+    private:
+        Song* head;
+        Song* tail;
+        string fileName;
+        size_t songCount;
+
+        string readStrBinary(ifstream& fin)
+        {
+            size_t len;
+            string str;
+
+            fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
+
+            if (len == 0)
+                return "";
+
+            str.resize(len);
+            fin.read(reinterpret_cast<char*>(str.data()), len);
+
+            return str;
+        }
+
+        void writeStrBinary(ofstream& fout, string str)
+        {
+            size_t len = str.size();
+            fout.write(reinterpret_cast<char*>(&len), sizeof(size_t));
+
+            if (len > 0)
+                fout.write(str.data(), len);
+        }
+
+        void offWithHis(Song* cur)
+        {
+            while (cur != nullptr)
+            {
+                Song* next = cur->next;
+                delete cur;
+                cur = next;
+            }
+        }
+
     public:
-        Library(string fileName)
+
+        Library(string file)
         {
-            head = new Song();
-            ifstream fin;
-            size_t len{};
-            char* line;
-            size_t songCount;
+            fileName = file;
+            head = nullptr;
+            tail = nullptr;
+            songCount = 0;
 
-            fin.open(fileName, std::ios::in | std::ios::binary);
-            fin.read(reinterpret_cast<char*>(&songCount), sizeof(size_t));
+            ifstream fin(fileName, std::ios::binary);
 
-            fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-            head->title.resize(len);
-            fin.read(&head->title[0], len);
-
-            fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-            head->artist.resize(len);
-            fin.read(&head->artist[0], len);
-
-            fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-            head->album.resize(len);
-            fin.read(&head->album[0], len);
-
-            fin.read(reinterpret_cast<char*>(&head->durationSeconds), sizeof(int));
-
-            Song* tmp = head;
-            Song* cur = tmp;
-
-            for (int i = 0; i < songCount - 1; i++)
+            if (!fin)
             {
-                Song* newSong = new Song();
-                if (i == 0)
-                {
-                    
-                }
-                fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-                newSong->title.resize(len);
-                fin.read(&newSong->title[0], len);
-
-                fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-                newSong->artist.resize(len);
-                fin.read(&newSong->artist[0], len);
-
-                fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-                newSong->album.resize(len);
-                fin.read(&newSong->album[0], len);
-
-                fin.read(reinterpret_cast<char*>(&newSong->durationSeconds), sizeof(int));
-                
-                cur->next = newSong;
-                cur = cur->next;
-            }
-            head = tmp;
-        }
-        ~Library()
-        {
-            Song* tmp = head;
-            while (tmp != NULL)
-            {
-                delete tmp;
-                tmp = tmp.next;
-            }
-            head = NULL;
-        }
-
-        void add(string title, string artist, string album, int durationSeconds)
-        {
-            Song* newSong =  new Song(title, artist, album, durationSeconds);
-            tail = newSong;
-            tail.next = tail;
-        }
-
-        Song* searchBySong(string query)
-        {
-            Song* tmp = head;
-            while (tmp != NULL)
-            {
-                if (tmp->title == query)
-                {
-                    return tmp;
-                }
-                tmp = tmp->next;
-            }
-            cout << "Could not find song\n";
-            return NULL;
-        }
-
-        Song* searchByArtist(string query)
-        {
-            Song* tmp = head;
-            while (tmp != NULL)
-            {
-                if (tmp->artist == query)
-                {
-                    return tmp;
-                }
-                tmp = tmp->next;
-            }
-            cout << "Could not find song\n";
-            return NULL;
-        }
-        void save(string name)
-        {
-            ofstream fout;
-            fout.open(name, std::ios::out | std::ios::binary);
-            if (!fout)
-            {
-                cout << "Failed to open file\n";
+                cout << "Failed to load file\n";
                 return;
             }
+
+            fin.read(reinterpret_cast<char*>(&songCount), sizeof(size_t));
+
+            for (size_t i = 0; i < songCount; i++)
+            {
+                Song newSong;
+
+                newSong.title = readStrBinary(fin);
+                newSong.artist = readStrBinary(fin);
+                newSong.album = readStrBinary(fin);
+
+                fin.read(reinterpret_cast<char*>(&newSong.durationSeconds), sizeof(int));
+
+                add(newSong.title, newSong.artist, newSong.album, newSong.durationSeconds);
+            }
+        }
+
+        ~Library()
+        {
+            offWithHis(head);
+        }
+
+        void save()
+        {
+            ofstream fout(fileName, std::ios::binary);
+
+            if (!fout)
+            {
+                cout << "Failed to save file\n";
+                return;
+            }
+
+            fout.write(reinterpret_cast<char*>(&songCount), sizeof(size_t));
+
             Song* tmp = head;
 
-            while (tmp != NULL)
+            while (tmp != nullptr)
             {
-                fout.write(reinterpret_cast<char*>(tmp->title.size()), sizeof(size_t));
-                fout.write(reinterpret_cast<char*>(&tmp->title), sizeof(string));
-
-                fout.write(reinterpret_cast<char*>(tmp->artist.size()), sizeof(size_t));
-                fout.write(reinterpret_cast<char*>(&tmp->artist), sizeof(string));
-
-                fout.write(reinterpret_cast<char*>(tmp->album.size()), sizeof(size_t));
-                fout.write(reinterpret_cast<char*>(&tmp->album), sizeof(string));
+                writeStrBinary(fout, tmp->title);
+                writeStrBinary(fout, tmp->artist);
+                writeStrBinary(fout, tmp->album);
 
                 fout.write(reinterpret_cast<char*>(&tmp->durationSeconds), sizeof(int));
 
                 tmp = tmp->next;
             }
-            fout.close();
         }
 
-        batchAdd(string fileName)
+        void add(string title, string artist, string album, int durationSeconds)
         {
-            ifstream fin;
-            fin.open(fileName, std::ios::in);
-            char* line;
-            int field = 0;
-            Song* newSong = new Song("", "", "", 0);
-            Song* tmp = head;
+            Song* cur = head;
 
-            if (!fin)
+            // check duplicates
+            while (cur != nullptr)
             {
-                cout << "Failed to open file\n";
+                if (cur->title == title)
+                {
+                    cur->artist = artist;
+                    cur->album = album;
+                    cur->durationSeconds = durationSeconds;
+                    return;
+                }
+                cur = cur->next;
+            }
+
+            Song* newSong = new Song(title, artist, album, durationSeconds);
+
+            if (head == nullptr)
+            {
+                head = newSong;
+                tail = newSong;
+                songCount++;
                 return;
             }
 
-            while (getline(fin, line))
+            cur = head;
+            Song* prev = nullptr;
+
+            while (cur != nullptr && cur->title < newSong->title)
             {
-                switch (field)
-                {
-                    case 0:
-                        newSong->title = line;
-                        break;
-                    case 0:
-                        newSong->artist = line;
-                        break;
-                    case 0:
-                        newSong->album = line;
-                        break;
-                    case 3:
-                        newSong->durationSeconds = std::stoi(line);
-                        break;
-                    default:
-                        break;
-                }
-                while (tmp != NULL)
-                {
-                    if (tmp->next.title.compareTo(newSong->title) > 0)
-                    {
-                        newSong.next = tmp;
-                        tmp = newSong;
-                    }
-                    tmp = tmp.next;
-                }
+                prev = cur;
+                cur = cur->next;
             }
-        }
 
-    private:
-        Song* head;
-        Song* tail;
-
-        Song* merge(Song* first, Song* second)
-        {
-            if (first == NULL) return second;
-            if (second == NULL) return first;
-
-            if (first.title.compareTo(second) < 0)
+            if (prev == nullptr)
             {
-                first->next = merge(first->next, second);
-                return first;
+                newSong->next = head;
+                head = newSong;
             }
             else
             {
-                second->next = merge(first, second->next);
-                return second;
+                newSong->next = cur;
+                prev->next = newSong;
+
+                if (cur == nullptr)
+                    tail = newSong;
+            }
+
+            songCount++;
+        }
+
+        void remove(string query)
+        {
+            Song* cur = head;
+            Song* prev = nullptr;
+
+            while (cur != nullptr)
+            {
+                if (cur->title == query)
+                {
+                    Song* next = cur->next;
+
+                    if (prev == nullptr)
+                        head = next;
+                    else
+                        prev->next = next;
+
+                    if (next == nullptr)
+                        tail = prev;
+
+                    delete cur;
+                    songCount--;
+
+                    cout << "Removed song " << query << "\n";
+                    return;
+                }
+
+                prev = cur;
+                cur = cur->next;
+            }
+
+            cout << "Could not find song " << query << "\n";
+        }
+
+        void displayLibrary()
+        {
+            Song* tmp = head;
+
+            while (tmp != nullptr)
+            {
+                cout << "Title: " << tmp->title << "\n";
+                cout << "Artist: " << tmp->artist << "\n";
+                cout << "Album: " << tmp->album << "\n";
+                cout << "Duration: " << tmp->durationSeconds << " seconds\n\n";
+
+                tmp = tmp->next;
             }
         }
 
-        void sortList()
+        void searchByTitle(string query)
         {
-            
+            Song* tmp = head;
+
+            while (tmp != nullptr)
+            {
+                if (tmp->title == query)
+                {
+                    cout << "Found song " << query << "\n";
+                    return;
+                }
+
+                tmp = tmp->next;
+            }
+
+            cout << "Could not find song " << query << "\n";
         }
-}
+
+        void searchByArtist(string query)
+        {
+            Song* tmp = head;
+            bool found = false;
+
+            while (tmp != nullptr)
+            {
+                if (tmp->artist == query)
+                {
+                    cout << "Found song " << tmp->title << "\n";
+                    found = true;
+                }
+
+                tmp = tmp->next;
+            }
+
+            if (!found)
+                cout << "Could not find any songs by " << query << "\n";
+        }
+
+        void batchAdd(string fileName)
+        {
+            ifstream fin(fileName);
+
+            if (!fin)
+            {
+                cout << "Failed to open batch file\n";
+                return;
+            }
+
+            string line;
+            Song newSong;
+            int field = 0;
+
+            while (getline(fin, line))
+            {
+                if (line.empty())
+                    continue;
+
+                int pos = line.find('=');
+
+                string var = line.substr(0, pos);
+                string val = line.substr(pos + 1);
+
+                if (var == "title")
+                    newSong.title = val;
+                else if (var == "artist")
+                    newSong.artist = val;
+                else if (var == "album")
+                    newSong.album = val;
+                else if (var == "durationSeconds")
+                    newSong.durationSeconds = stoi(val);
+
+                field++;
+
+                if (field == 4)
+                {
+                    add(newSong.title, newSong.artist, newSong.album, newSong.durationSeconds);
+                    field = 0;
+                }
+            }
+        }
+
+        void batchRemove(string fileName)
+        {
+            ifstream fin(fileName);
+
+            if (!fin)
+            {
+                cout << "Failed to open batch file\n";
+                return;
+            }
+
+            string line;
+
+            while (getline(fin, line))
+            {
+                remove(line);
+            }
+        }
+};
