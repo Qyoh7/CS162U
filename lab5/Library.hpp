@@ -13,10 +13,14 @@ class Library
     public:
         Library(string fileName)
         {
+            head = new Song();
             ifstream fin;
             size_t len{};
             char* line;
+            size_t songCount;
+
             fin.open(fileName, std::ios::in | std::ios::binary);
+            fin.read(reinterpret_cast<char*>(&songCount), sizeof(size_t));
 
             fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
             head->title.resize(len);
@@ -24,7 +28,7 @@ class Library
 
             fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
             head->artist.resize(len);
-            fin.read(&head->album[0], len);
+            fin.read(&head->artist[0], len);
 
             fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
             head->album.resize(len);
@@ -33,25 +37,33 @@ class Library
             fin.read(reinterpret_cast<char*>(&head->durationSeconds), sizeof(int));
 
             Song* tmp = head;
+            Song* cur = tmp;
 
-            while (tmp != NULL)
+            for (int i = 0; i < songCount - 1; i++)
             {
+                Song* newSong = new Song();
+                if (i == 0)
+                {
+                    
+                }
                 fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-                tmp->title.resize(len);
-                fin.read(&tmp->title[0], len);
+                newSong->title.resize(len);
+                fin.read(&newSong->title[0], len);
 
                 fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-                tmp->artist.resize(len);
-                fin.read(&tmp->artist[0], len);
+                newSong->artist.resize(len);
+                fin.read(&newSong->artist[0], len);
 
                 fin.read(reinterpret_cast<char*>(&len), sizeof(size_t));
-                tmp->album.resize(len);
-                fin.read(&tmp->album[0], len);
+                newSong->album.resize(len);
+                fin.read(&newSong->album[0], len);
 
-                fin.read(reinterpret_cast<char*>(&tmp->durationSeconds), sizeof(int));
-
-                tmp = tmp->next;
+                fin.read(reinterpret_cast<char*>(&newSong->durationSeconds), sizeof(int));
+                
+                cur->next = newSong;
+                cur = cur->next;
             }
+            head = tmp;
         }
         ~Library()
         {
@@ -134,6 +146,9 @@ class Library
             ifstream fin;
             fin.open(fileName, std::ios::in);
             char* line;
+            int field = 0;
+            Song* newSong = new Song("", "", "", 0);
+            Song* tmp = head;
 
             if (!fin)
             {
@@ -143,12 +158,58 @@ class Library
 
             while (getline(fin, line))
             {
-                
+                switch (field)
+                {
+                    case 0:
+                        newSong->title = line;
+                        break;
+                    case 0:
+                        newSong->artist = line;
+                        break;
+                    case 0:
+                        newSong->album = line;
+                        break;
+                    case 3:
+                        newSong->durationSeconds = std::stoi(line);
+                        break;
+                    default:
+                        break;
+                }
+                while (tmp != NULL)
+                {
+                    if (tmp->next.title.compareTo(newSong->title) > 0)
+                    {
+                        newSong.next = tmp;
+                        tmp = newSong;
+                    }
+                    tmp = tmp.next;
+                }
             }
-
         }
 
     private:
-        Song* head = NULL;
-        Song* tail = NULL;
-};
+        Song* head;
+        Song* tail;
+
+        Song* merge(Song* first, Song* second)
+        {
+            if (first == NULL) return second;
+            if (second == NULL) return first;
+
+            if (first.title.compareTo(second) < 0)
+            {
+                first->next = merge(first->next, second);
+                return first;
+            }
+            else
+            {
+                second->next = merge(first, second->next);
+                return second;
+            }
+        }
+
+        void sortList()
+        {
+            
+        }
+}

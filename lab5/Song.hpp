@@ -11,6 +11,13 @@ class Song
             this->album = album;
             this->durationSeconds = durationSeconds;
         }
+        Song()
+        {
+            title = "";
+            artist = "";
+            album = "";
+            durationSeconds = 0;
+        }
         Song* next;
         string title;
         string artist;
