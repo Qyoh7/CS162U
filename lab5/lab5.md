@@ -2,7 +2,9 @@
 
 # My code
 
-Too much code in this project. Head over to my [github repo](https://github.com/Qyoh7/CS162U) where I supply example batch files along with all the project files.
+Too much code in this project. Head over to my github repo where I supply example batch files along with all the project files.
+
+https://github.com/Qyoh7/CS162U
 
 # AI Feedback
 
