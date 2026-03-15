@@ -16,11 +16,11 @@ class Card
             cout << m_rank << " of " << m_suit << "\n";
         }
 
-        void SetRank(Rank rank) { m_rank = rank; }
-        void SetSuit(Suit suit) { m_suit = suit; }
+        void setRank(Rank rank) { m_rank = rank; }
+        void setSuit(Suit suit) { m_suit = suit; }
 
-        Rank GetRank() { return m_rank; }
-        Suit GetSuit() { return m_suit; };
+        Rank getRank() { return m_rank; }
+        Suit getSuit() { return m_suit; };
 
     private:
         Rank m_rank;
