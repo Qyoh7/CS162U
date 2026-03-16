@@ -298,9 +298,3 @@ private:
 * Removes unused `getRand()`.
 * Includes a `displayDeck()` function.
 * Ready to integrate into any card game.
-
----
-
-If you want, I can **also rewrite it without using `std::shuffle` and instead manually implement a Fisher–Yates shuffle** for Lab-style exercises, which some instructors prefer.
-
-Do you want me to do that?
